@@ -1,11 +1,11 @@
 # Site Settings
-title:               Lagrange
-tagline:             a minimalist Jekyll theme
+title:               Bunches Of Hunches
+tagline:             
 description:
-baseurl:            #"/Lagrange"
-url:                #"https://lenpaul.github.io"
+baseurl:            #""
+url:                #"https://thewiselion.github.io"
 github:
-  url:               "https://lenpaul.github.io/Lagrange"
+  url:               #"https://thewiselion.github.io"
 author:
   name:              "John Mecham"
   email:             "jon.mecham@gmail.com"
@@ -23,7 +23,7 @@ navigation:
   url: /contact
 
 paginate:            5
-disqus:              "bunchesofhunches.disqus.com"
+disqus:              "bunchesofhunches"
 
 # Build settings
 markdown:            kramdown
