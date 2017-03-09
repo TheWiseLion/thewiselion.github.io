@@ -1,8 +1,8 @@
 ---
 layout: post
 title: "Deploying A Flask App On Google App Engine's Standard Environment"
-categories: journal
-tags: [documentation,sample]
+categories: google cloud, python
+tags: [GAE, google app engine, python, flex enviroment, standard enviroment]
 image:
   feature: DOGAE.png
   teaser: DOGAE.png
