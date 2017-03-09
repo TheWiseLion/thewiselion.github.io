@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "How I Got 1000x Speed Up In Python"
-categories: python, optimization
+categories: [python, optimization]
 tags: [python, cython, C, pypi, pip]
 image:
   feature: Python1000x.png
@@ -249,6 +249,8 @@ For me the quickest hack was the following:
 ```
 
 With tools like CI Travis (I’m a big fan ) you can quickly test if your module works across multiple version of python. 
+
+---
 
 # Results
 C performs branching and looping at rates significantly faster than that of native python. 

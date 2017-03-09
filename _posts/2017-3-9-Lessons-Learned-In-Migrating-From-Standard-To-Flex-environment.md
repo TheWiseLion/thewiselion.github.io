@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Lessons Learned In Migrating From Standard To Flex Environment (Python)"
-categories: google cloud, python
+categories: [python, google_cloud]
 tags: [GAE, google app engine, python, flex enviroment, standard enviroment]
 image:
   feature: Port1024x600.png
