@@ -94,8 +94,12 @@ I kept my setup as simple as possible exposing only one function that took four 
 ## Setting up a python extension
 A python extension makes a compiled C function callable from python. 
 <br/><br/>
-To do this can use setup tools, which will basically compile the provided C code and make it usable from python. 
-![](/images/PythonExtensionScheme.png "Python-SetupTools-C")
+To do this one can use [setup tools](http://setuptools.readthedocs.io/en/latest/setuptools.html), which will basically compile the provided C code and make it usable from python. 
+
+<br/>
+<div style="text-align:center">
+<img src="/images/PythonExtensionScheme.png" alt="Python-SetupTools-C"/>
+</div>
 The setup.py will look akin to the following:
 ```python
 from setuptools import setup, Extension
