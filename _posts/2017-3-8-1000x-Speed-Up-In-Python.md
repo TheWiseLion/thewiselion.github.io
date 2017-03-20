@@ -14,20 +14,23 @@ I detail my journey of optimizing a component of my python program and how it re
 ---
 
 # Background
-Python is great, development time is fast, errors are usually sensible, and most importantly great package managers with tens of thousands of supported modules. This is why it’s my weapon of choice when rapid development is required, however sometimes you’ll require a specific component that needs to run extremely fast. When building pykhet-online, an online version of a chess-like game, I had such a problem. The AI for the game had poor performance because the native python could only explore ~1000 moves per second, whereas most chess AI’s require upwards of one million per second. 
+Python is great, development time is fast, errors are usually sensible, and most importantly there are great package managers with tens of thousands of supported modules. These are just some of the reasons why it’s my weapon of choice when rapid development is required. 
+However sometimes you’ll require a specific component that needs to run extremely fast, which is not something pyhon does particularly well. When building [khet-online](http://khet-online.com), an online version of a chess-like game, I had such a problem. 
+The AI for the game had poor performance because the native python could only explore ~1000 moves per second, whereas most chess AI’s require upwards of one million per second. 
 
 ---
 
 # Path to optimization
 The first step to any optimization is to first profile. In my case I used Pycharm's [default profiler](https://docs.python.org/2/library/profile.html). <br/><br/>
-From there I improved my initial implementation by using better data structures IE numpy byte arrays over python dictionaries. I also got significant gains by using python 3.x over the python 2.x I was using previously. <br/><br/>
+From there I improved my initial implementation by using better data structures IE numpy byte arrays over python dictionaries. I also got significant gains by using python 3.x over the python 2.x I had been using previously. <br/><br/>
 All this effort equated to about a 2.6x speed up or about ~2500 moves per second. This is still much too slow to be useful, especially when I had no intension on developing a quality heuristic, which may have made the low move exploration workable.
 <br/><br/>
-The specific component I wanted to optimzize was basically composed of simple for loops and lots of branching. <br/><br/>
-In fact the code was composed of ~77 conditions, of course I removed as many conditions as possible when but the nature of generating valid board moves means one must actually validate a configuration is valid, and unlike checkers, Khet has a lot of rules…. <br/><br/>
+The specific component I wanted to optimize was basically composed of simple for loops and lots of branching. <br/><br/>
+In fact the code was composed of ~77 if conditions per evaluation of move. 
+Of course I removed as many conditions as possible when, but the nature of generating valid board moves means one must actually validate if a configuration is valid, and unlike checkers, Khet has a lot of rules…. <br/><br/>
 A sample logic snippet sits below: <br/><br/>
 ```python
-# Code snippet describing how a game machanic interacts with a specifc piece
+# Code snippet describing how a game mechanic interacts with a specific piece
 if piece == _pyramid:
 	if light_direction == _up:
 		if orientation == _down:
@@ -66,21 +69,24 @@ I had a few options on how to optimize my python
 2. [Better interpreter (Iron Python)](http://ironpython.net/)
 3. [Python Extension (“C” binding)](https://docs.python.org/2/extending/extending.html)
 
-Option (2) was out because I was deploying on cloud environments like elastic bean stalk and google app engine (GAE) where I would have no control of the interpreter being used. <br/><br/>
-In the end I chose option 4 because everyone that went through with the implementation saw 100x+ improvement in speed. It's quite possible that the LLVM compiler might have been an easier route and was certainly worth a bit more exploration.
+Option (2) was out because I was deploying on cloud environments like elastic bean stalk and google app engine (GAE) where I would have no control of the interpreter being used.
+<br/><br/>
+In the end I chose option (3) because everyone that went through with the implementation saw 100x+ improvement in speed. 
+It's quite possible that the LLVM compiler might have been an easier route and was certainly worth a bit more exploration.
 
 ---
 
 # Building a python module, in C?
-So my research indicated I would see something along the lines of a 100x speed up if I just reimplememented the exact same code in C. Geared with nothing but [docs.python.org](https://docs.python.org/2/extending/extending.html) I got to work reimplementing all that I had written in python to also run in C. 
+So my research indicated I would see something along the lines of a 100x speed up if I just reimplemented the exact same code in C. Geared with nothing but [docs.python.org](https://docs.python.org/2/extending/extending.html) I got to work reimplementing all that I had written in python to also run in C. 
 <br/><br/>
-This is where the down side of this method really shows, it took a lot of effort to reimplement all the logic I so carefully crafted in python. If you follow the similar path you’ll realize just how much python handles for you. Keeping a counter for every runtime allocated array is not so much fun. Also unlike the nice exceptions in java, C just gives you the infamous segfault or worse yet the silent but deadly memory leak. 
+The down side of this method really started to show as it took a lot of effort to reimplement all the logic I so carefully crafted in python. If you follow the similar path you’ll realize just how much python handles for you. Keeping a counter for every runtime allocated array is not so much fun. Also unlike the nice exceptions in python, C just gives you the infamous segfault or worse yet the silent but deadly memory leak. 
 <br/><br/>
-Once I had rewritten all the logic it was time to actually create the interface I required. Now I kept it as basic as I could manage.  <br/><br/>
-I had 4 inputs:
+You also have to consider the additional logic required to setup the interface between C and your module.
+<br/>
+I kept my setup as simple as possible exposing only one function that took four parameters:
 1.	Color of moving player 
 2.	The board state (in my case a list of integers)
-3.  The minium depth of the possible move search tree
+3.  The minimum depth of the possible move search tree
 4.	How many moves should be explored 
 
 ---
@@ -88,7 +94,7 @@ I had 4 inputs:
 ## Setting up a python extension
 A python extension makes a compiled C function callable from python. 
 <br/><br/>
-To do used setup tools, which will basically compile the provided C code and make it usable from python. 
+To do this can use setup tools, which will basically compile the provided C code and make it usable from python. 
 ![](/images/PythonExtensionScheme.png "Python-SetupTools-C")
 The setup.py will look akin to the following:
 ```python
@@ -126,7 +132,7 @@ void initdemo(void)
 }
 ```
 
-Here the keywork demo is looked for as we defined that as the module name...
+Here the keyword "demo" is looked for as we defined that as the module name...
 
 
 The C interface for a exposed function ends up looking like the following:
@@ -135,14 +141,14 @@ The C interface for a exposed function ends up looking like the following:
 * Python-C entry point (provided method)
 */
 static PyObject * search(PyObject* self, PyObject *args){
-    // defining variables 
-	PyObject *l;
+    // defining variables
+    PyObject *l;
     const char * board;
     struct MoveResults mr;
     struct MoveRating r;
     char actualBoard[80];
     PyObject * listObj;
-	// ...
+    // ...
 	
     // Get parameters from python
     // b -> boolean (moving player)
@@ -248,7 +254,7 @@ For me the quickest hack was the following:
 #endif
 ```
 
-With tools like CI Travis (I’m a big fan ) you can quickly test if your module works across multiple version of python. 
+With tools like [CI Travis](https://travis-ci.org/) (I’m a big fan ) you can quickly test if your module works across multiple version of python. 
 
 ---
 
@@ -260,6 +266,6 @@ In my case I saw a speed up of ~1000x, the new bottle neck became related to mem
 <img src="/images/SearchTree.gif" alt="example search tree"/>
 </div>
 <br/>
-Even though my C implementation was probably around ~10x more space effiecent in storing each move delta I still ran into memory problems because of the sheer magnitude of additional moves that could be explored.
+Even though my C implementation was probably around ~10x more space efficient in storing move information I still ran into memory problems because of the sheer magnitude of additional moves that could be explored.
 <br/><br/>
-So there you go, if you optimize speed enough you might run into space issues...
+So there you go, if you optimize the runtime speed enough you might run into space issues...
